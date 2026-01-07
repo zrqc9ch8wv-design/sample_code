@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>スライドショー生成ツール</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .info-box {
+            background: #e8f4fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #4a9fd8;
+        }
+
+        .info-box h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+            color: #34495e;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+        }
+
+        .add-file-btn {
+            background: #4a9fd8;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .add-file-btn:hover {
+            background: #3d8ac4;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 159, 216, 0.3);
+        }
+
+        .file-list {
+            margin-bottom: 30px;
+        }
+
+        .file-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            cursor: move;
+            transition: all 0.3s ease;
+        }
+
+        .file-item:hover {
+            border-color: #4a9fd8;
+            background: #e3f2fd;
+        }
+
+        .file-item.dragging {
+            opacity: 0.5;
+            border-color: #4a9fd8;
+        }
+
+        .file-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #2c3e50;
+            flex: 1;
+        }
+
+        .drag-handle {
+            color: #999;
+            font-size: 20px;
+            margin-right: 10px;
+            cursor: move;
+        }
+
+        .file-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .duration-input {
+            width: 80px;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+
+        .animation-section {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .animation-section h3 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .animation-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .animation-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 15px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .animation-option:hover {
+            border-color: #ffc107;
+            background: #fffbeb;
+        }
+
+        .animation-option input {
+            cursor: pointer;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .generate-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #28a745;
+            display: none;
+        }
+
+        .file-count {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 スライドショー生成ツール</h1>
+        <p class="subtitle">画像とPDFを選択して、自動再生スライドショーHTMLを生成します</p>
+
+        <div class="info-box">
+            <h3>📋 機能</h3>
+            <ul>
+                <li>✅ 画像とPDFを画面いっぱいに表示</li>
+                <li>✅ スライドごとに表示時間を個別設定</li>
+                <li>✅ ドラッグ&ドロップで順番を変更</li>
+                <li>✅ ランダムアニメーション効果</li>
+                <li>✅ 6時間ごとに自動リロード</li>
+            </ul>
+        </div>
+
+        <div class="file-count" id="fileCount"></div>
+
+        <button class="add-file-btn" onclick="document.getElementById('fileInput').click()">
+            📎 ファイルを追加（画像・PDF）
+        </button>
+        <input type="file" id="fileInput" multiple accept="image/*,.pdf" style="display: none;">
+
+        <div class="file-list" id="fileList"></div>
+
+        <div class="animation-section">
+            <h3>🎨 アニメーション設定</h3>
+            <div class="animation-options">
+                <label class="animation-option">
+                    <input type="checkbox" value="fade" checked> フェード
+                </label>
+                <label class="animation-option">
+                    <input type="checkbox" value="slide-right" checked> スライド（右→）
+                </label>
+                <label class="animation-option">
+                    <input type="checkbox" value="slide-left" checked> スライド（←左）
+                </label>
+                <label class="animation-option">
+                    <input type="checkbox" value="zoom-in" checked> ズームイン
+                </label>
+                <label class="animation-option">
+                    <input type="checkbox" value="zoom-out" checked> ズームアウト
+                </label>
+            </div>
+        </div>
+
+        <button class="generate-btn" id="generateBtn" onclick="generateHTML()" disabled>
+            🚀 スライドショーHTMLを生成してダウンロード
+        </button>
+
+        <div class="success-message" id="successMessage">
+            ✅ HTMLファイルを生成しました！ダウンロードが開始されます。
+        </div>
+    </div>
+
+    <script>
+        let slides = [];
+        let draggedIndex = null;
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            
+            if (files.length === 0) return;
+            
+            files.forEach(file => {
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    slides.push({
+                        data: event.target.result,
+                        name: file.name,
+                        type: file.type.startsWith('image/') ? 'image' : 'pdf',
+                        duration: 5
+                    });
+                    
+                    updateFileList();
+                    updateFileCount();
+                };
+                
+                reader.readAsDataURL(file);
+            });
+            
+            e.target.value = '';
+        });
+
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+
+            slides.forEach((slide, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.draggable = true;
+                fileItem.dataset.index = index;
+
+                fileItem.innerHTML = '<div class="file-item-header">' +
+                    '<span class="drag-handle">☰</span>' +
+                    '<span class="file-name">' + (slide.type === 'image' ? '🖼️' : '📄') + ' ' + slide.name + '</span>' +
+                    '<div class="file-controls">' +
+                    '<input type="number" class="duration-input" value="' + slide.duration + '" min="1" max="300" onchange="updateDuration(' + index + ', this.value)">' +
+                    '<span style="color: #666;">秒</span>' +
+                    '<button class="delete-btn" onclick="removeFile(' + index + ')">削除</button>' +
+                    '</div>' +
+                    '</div>';
+
+                fileItem.addEventListener('dragstart', function() {
+                    draggedIndex = index;
+                    this.classList.add('dragging');
+                });
+
+                fileItem.addEventListener('dragend', function() {
+                    this.classList.remove('dragging');
+                });
+
+                fileItem.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                });
+
+                fileItem.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    const dropIndex = parseInt(this.dataset.index);
+                    
+                    if (draggedIndex !== dropIndex) {
+                        const removed = slides.splice(draggedIndex, 1)[0];
+                        slides.splice(dropIndex, 0, removed);
+                        updateFileList();
+                    }
+                });
+
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        function updateDuration(index, value) {
+            slides[index].duration = parseInt(value);
+        }
+
+        function removeFile(index) {
+            slides.splice(index, 1);
+            updateFileList();
+            updateFileCount();
+        }
+
+        function updateFileCount() {
+            const count = slides.length;
+            const fileCount = document.getElementById('fileCount');
+            const generateBtn = document.getElementById('generateBtn');
+            
+            if (count > 0) {
+                fileCount.style.display = 'block';
+                fileCount.textContent = '✅ ' + count + '個のファイルが選択されています';
+                generateBtn.disabled = false;
+            } else {
+                fileCount.style.display = 'none';
+                generateBtn.disabled = true;
+            }
+        }
+
+        function generateHTML() {
+            if (slides.length === 0) {
+                alert('ファイルを追加してください');
+                return;
+            }
+
+            const selectedAnimations = Array.from(document.querySelectorAll('.animation-option input:checked'))
+                .map(function(input) { return input.value; });
+
+            if (selectedAnimations.length === 0) {
+                alert('少なくとも1つのアニメーションを選択してください');
+                return;
+            }
+
+            const htmlContent = generateHTMLContent(slides, selectedAnimations);
+            downloadHTML(htmlContent, 'slideshow_auto.html');
+
+            document.getElementById('successMessage').style.display = 'block';
+            setTimeout(function() {
+                document.getElementById('successMessage').style.display = 'none';
+            }, 5000);
+        }
+
+        function generateHTMLContent(slides, animations) {
+            const slidesJSON = JSON.stringify(slides);
+            const animationsJSON = JSON.stringify(animations);
+            
+            const html = '<!DOCTYPE html>\n' +
+'<html lang="ja">\n' +
+'<head>\n' +
+'    <meta charset="UTF-8">\n' +
+'    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+'    <title>自動スライドショー</title>\n' +
+'    <style>\n' +
+'        * { margin: 0; padding: 0; box-sizing: border-box; }\n' +
+'        body { font-family: \'Segoe UI\', Tahoma, sans-serif; background: #000; overflow: hidden; width: 100vw; height: 100vh; }\n' +
+'        .slideshow-container { position: relative; width: 100%; height: 100%; background: #000; }\n' +
+'        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; display: flex; justify-content: center; align-items: center; background: #000; }\n' +
+'        .slide.active { opacity: 1; z-index: 2; }\n' +
+'        .slide img { max-width: 100%; max-height: 100%; object-fit: contain; }\n' +
+'        .slide iframe { width: 100%; height: 100%; border: none; }\n' +
+'        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }\n' +
+'        @keyframes slideRight { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }\n' +
+'        @keyframes slideLeft { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }\n' +
+'        @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }\n' +
+'        @keyframes zoomOut { from { transform: scale(1.2); opacity: 0; } to { transform: scale(1); opacity: 1; } }\n' +
+'        .slide.fade { animation: fadeIn 1s ease-in-out; }\n' +
+'        .slide.slide-right { animation: slideRight 1s ease-in-out; }\n' +
+'        .slide.slide-left { animation: slideLeft 1s ease-in-out; }\n' +
+'        .slide.zoom-in { animation: zoomIn 1s ease-in-out; }\n' +
+'        .slide.zoom-out { animation: zoomOut 1s ease-in-out; }\n' +
+'        .controls { position: fixed; bottom: 20px; right: 20px; background: rgba(0, 0, 0, 0.8); padding: 15px 20px; border-radius: 10px; display: flex; gap: 10px; align-items: center; opacity: 0; transition: opacity 0.3s ease; z-index: 1000; }\n' +
+'        body:hover .controls { opacity: 1; }\n' +
+'        .controls button { background: #4a9fd8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.3s ease; }\n' +
+'        .controls button:hover { background: #3d8ac4; transform: scale(1.05); }\n' +
+'        .controls .info { color: white; font-size: 14px; margin-right: 10px; }\n' +
+'        .fullscreen-btn { position: fixed; top: 20px; right: 20px; background: rgba(74, 159, 216, 0.8); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; transition: all 0.3s ease; z-index: 1000; opacity: 0; }\n' +
+'        body:hover .fullscreen-btn { opacity: 1; }\n' +
+'        .fullscreen-btn:hover { background: rgba(61, 138, 196, 0.9); transform: scale(1.05); }\n' +
+'    </style>\n' +
+'</head>\n' +
+'<body>\n' +
+'    <button class="fullscreen-btn" id="fullscreenBtn" onclick="toggleFullscreen()">🖥️ フルスクリーン</button>\n' +
+'    <div class="slideshow-container" id="slideshowContainer"></div>\n' +
+'    <div class="controls">\n' +
+'        <span class="info" id="slideInfo">-</span>\n' +
+'        <button onclick="previousSlide()">⏮️ 前へ</button>\n' +
+'        <button onclick="togglePause()" id="pauseBtn">⏸️ 一時停止</button>\n' +
+'        <button onclick="nextSlide()">次へ ⏭️</button>\n' +
+'    </div>\n' +
+'    <scr' + 'ipt>\n' +
+'        const slides = ' + slidesJSON + ';\n' +
+'        const animations = ' + animationsJSON + ';\n' +
+'        let currentSlideIndex = 0;\n' +
+'        let isPaused = false;\n' +
+'        let currentSlideTimer = null;\n' +
+'        let imagesLoaded = 0;\n' +
+'        setInterval(function() { location.reload(); }, 6 * 60 * 60 * 1000);\n' +
+'        function renderSlides() {\n' +
+'            const container = document.getElementById("slideshowContainer");\n' +
+'            container.innerHTML = "";\n' +
+'            slides.forEach(function(slide, index) {\n' +
+'                const slideDiv = document.createElement("div");\n' +
+'                slideDiv.className = "slide";\n' +
+'                slideDiv.dataset.index = index;\n' +
+'                if (slide.type === "image") {\n' +
+'                    const img = document.createElement("img");\n' +
+'                    img.src = slide.data;\n' +
+'                    img.onload = function() {\n' +
+'                        imagesLoaded++;\n' +
+'                        if (imagesLoaded === slides.filter(function(s) { return s.type === "image"; }).length) {\n' +
+'                            setTimeout(function() { showSlide(0); }, 100);\n' +
+'                        }\n' +
+'                    };\n' +
+'                    slideDiv.appendChild(img);\n' +
+'                } else {\n' +
+'                    const iframe = document.createElement("iframe");\n' +
+'                    iframe.src = slide.data + "#view=Fit&toolbar=0&navpanes=0&scrollbar=0";\n' +
+'                    slideDiv.appendChild(iframe);\n' +
+'                }\n' +
+'                container.appendChild(slideDiv);\n' +
+'            });\n' +
+'            if (slides.filter(function(s) { return s.type === "image"; }).length === 0) {\n' +
+'                setTimeout(function() { showSlide(0); }, 100);\n' +
+'            }\n' +
+'        }\n' +
+'        function showSlide(index) {\n' +
+'            const allSlides = document.querySelectorAll(".slide");\n' +
+'            const randomAnimation = animations[Math.floor(Math.random() * animations.length)];\n' +
+'            allSlides.forEach(function(slide) {\n' +
+'                slide.classList.remove("active", "fade", "slide-right", "slide-left", "zoom-in", "zoom-out");\n' +
+'            });\n' +
+'            if (allSlides[index]) {\n' +
+'                allSlides[index].classList.add("active", randomAnimation);\n' +
+'            }\n' +
+'            currentSlideIndex = index;\n' +
+'            document.getElementById("slideInfo").textContent = (currentSlideIndex + 1) + " / " + slides.length + " (" + slides[currentSlideIndex].duration + "秒)";\n' +
+'            if (currentSlideTimer) clearTimeout(currentSlideTimer);\n' +
+'            currentSlideTimer = setTimeout(function() {\n' +
+'                if (!isPaused) nextSlide();\n' +
+'            }, slides[index].duration * 1000);\n' +
+'        }\n' +
+'        function nextSlide() {\n' +
+'            currentSlideIndex = (currentSlideIndex + 1) % slides.length;\n' +
+'            showSlide(currentSlideIndex);\n' +
+'        }\n' +
+'        function previousSlide() {\n' +
+'            currentSlideIndex = (currentSlideIndex - 1 + slides.length) % slides.length;\n' +
+'            showSlide(currentSlideIndex);\n' +
+'        }\n' +
+'        function togglePause() {\n' +
+'            isPaused = !isPaused;\n' +
+'            const btn = document.getElementById("pauseBtn");\n' +
+'            if (isPaused) {\n' +
+'                btn.textContent = "▶️ 再開";\n' +
+'                if (currentSlideTimer) clearTimeout(currentSlideTimer);\n' +
+'            } else {\n' +
+'                btn.textContent = "⏸️ 一時停止";\n' +
+'                showSlide(currentSlideIndex);\n' +
+'            }\n' +
+'        }\n' +
+'        function toggleFullscreen() {\n' +
+'            if (!document.fullscreenElement) {\n' +
+'                document.documentElement.requestFullscreen();\n' +
+'                document.getElementById("fullscreenBtn").textContent = "🖥️ 終了";\n' +
+'            } else {\n' +
+'                document.exitFullscreen();\n' +
+'                document.getElementById("fullscreenBtn").textContent = "🖥️ フルスクリーン";\n' +
+'            }\n' +
+'        }\n' +
+'        document.addEventListener("keydown", function(e) {\n' +
+'            switch(e.key) {\n' +
+'                case "ArrowRight": nextSlide(); break;\n' +
+'                case "ArrowLeft": previousSlide(); break;\n' +
+'                case " ": togglePause(); e.preventDefault(); break;\n' +
+'                case "f":\n' +
+'                case "F": toggleFullscreen(); break;\n' +
+'            }\n' +
+'        });\n' +
+'        renderSlides();\n' +
+'    </scr' + 'ipt>\n' +
+'</body>\n' +
+'</html>';
+
+            return html;
+        }
+
+        function downloadHTML(content, filename) {
+            const blob = new Blob([content], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
